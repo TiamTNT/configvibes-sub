@@ -1,0 +1,33 @@
+name: Update Subscription
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'   # هر ۳۰ دقیقه یک‌بار
+  workflow_dispatch:         # امکان اجرای دستی هم داشته باشی
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run update script
+        env:
+          SOURCE_URL: ${{ secrets.SOURCE_URL }}   # لینک ساب اصلی رو اینجا می‌ذاریم
+        run: python update.py
+
+      - name: Commit and push if changed
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add sub.txt
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update subscription $(date -u +%Y-%m-%d_%H:%M:%S)" && git push)
